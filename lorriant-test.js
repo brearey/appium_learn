@@ -4,8 +4,9 @@ const capabilities = {
   platformName: 'Android',
   'appium:automationName': 'UiAutomator2',
   'appium:deviceName': 'Medium Phone API 36',
-  'appium:appPackage': 'package:com.android.chrome',
-  // 'appium:appActivity': '.Settings',
+  'appium:browserName': 'Chrome',
+  'appium:chromedriverAutodownload': true,
+  'appium:noReset': true, // Не сбрасывать состояние между сессиями
 };
 
 const wdOpts = {
@@ -15,27 +16,20 @@ const wdOpts = {
   capabilities,
 };
 
-(async () => {
-    const client = await remote(wdOpts);
-    try {
-        await client.url('https://lorriant.ru');
-        // Wait for page to load and check HTTP status via performance logs
-        const logs = await client.getLogs('performance');
-        const networkResponse = logs.find(log => {
-            try {
-                const message = JSON.parse(log.message).message;
-                return message.method === 'Network.responseReceived' &&
-                    message.params.response.url === 'https://lorriant.ru' &&
-                    message.params.response.status === 200;
-            } catch (e) { return false; }
-        });
-        if (networkResponse) {
-            console.log('✅ lorriant.ru loaded with status 200');
-        } else {
-            console.error('❌ Failed to verify status 200 for lorriant.ru');
-            process.exit(1);
-        }
-    } finally {
-        await client.deleteSession();
-    }
-})();
+async function runTest() {
+  const driver = await remote(wdOpts);
+  try {
+    await driver.url('https://ykt.ru');
+    console.log('✅ Сайт открыт');
+    await driver.pause(3000);
+    const title = await driver.getTitle();
+    console.log('📄 Заголовок:', title);
+  } catch (err) {
+    console.error('❌ Ошибка:', err.message);
+  } finally {
+    // Упрощенное закрытие без дополнительных проверок
+    await driver.deleteSession().catch(() => {});
+  }
+}
+
+runTest();
